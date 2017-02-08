@@ -35,9 +35,42 @@ function loadData() {
                 '<p>' + article.snippet + '</p>'+
             '</li>');
         }
+
+    //As of jQuery 1.8, .error() is deprecated. Use .fail() instead.
     }).error(function(e){
         $nytHeaderElem.text('New York Times Articles Could Not Be Loaded');
     });
+
+    // load wikipedia data
+    //https://www.mediawiki.org/wiki/API:Main_page#The_endpoint
+    //https://www.mediawiki.org/wiki/API:Cross-site_requests
+    var wikiUrl = 'http://en.wikipedia.org/w/api.php?action=opensearch&search=' + cityStr + '&format=json&callback=wikiCallback';
+    // There is no error handling in JSON-P , hence Using a Timeout can help us work aound a solution for handling errors
+    var wikiRequestTimeout = setTimeout(function(){
+        $wikiElem.text("failed to get wikipedia resources");
+    }, 8000);
+
+    //http://api.jquery.com/jquery.ajax/
+    //http://json-jsonp-tutorial.craic.com/index.html
+    $.ajax({
+        url: wikiUrl,
+        dataType: "jsonp",
+        jsonp: "callback",
+
+        //as of jquery 1.8 the use of success as a callback is deprecated, use .done(function(){//.....}) instead
+        success: function( response ) {
+            var articleList = response[1];
+
+            for (var i = 0; i < articleList.length; i++) {
+                articleStr = articleList[i];
+                var url = 'http://en.wikipedia.org/wiki/' + articleStr;
+                $wikiElem.append('<li><a href="' + url + '">' + articleStr + '</a></li>');
+            };
+            //Since there is no need for a timeout , when the AJAX request has been responded by the server
+            clearTimeout(wikiRequestTimeout);
+        }
+    });
+
     return false;
 }
 
